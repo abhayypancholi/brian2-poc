@@ -97,17 +97,55 @@ except ParseException as p_exc:
         + str(p_exc)
     ) from p_exc
 ```
+If we run this
+Equations("dv//dt = v / tau : volt")
 
-Example of what a researcher sees:
+This is what a researcher sees:
 ```
-EquationError: Parsing failed:
-dv/dt = (El - v) / tau
-                      ^
-Expected ':'
+brian2.equations.equations.EquationError: Parsing failed: 
+dv//dt = v / tau : volt
+^
+Expected end of text, found 'dv'  (at char 0), (line:1, col:1)
 ```
 
-The caret points to a location but gives no explanation of what
-Brian expected or how to fix it. The same pattern exists in
+for Equations("dv/dt = v^2 / tau : volt")
+The researcher sees:
+'''
+Traceback (most recent call last):
+  File "c:\CODE\brian2\check.py", line 4, in <module>
+    Equations("dv/dt = v^2 / tau : volt")
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\CODE\brian2\brian2\equations\equations.py", line 619, in __init__
+    self._equations = parse_string_equations(eqns)
+                      ~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "c:\CODE\brian2\brian2\utils\caching.py", line 107, in cached_func
+    func._cache[cache_key] = func(*args, **kwds)
+                             ~~~~^^^^^^^^^^^^^^^
+  File "c:\CODE\brian2\brian2\equations\equations.py", line 416, in parse_string_equations
+    expression = Expression(p.sub(" ", expression))
+  File "c:\CODE\brian2\brian2\equations\codestrings.py", line 108, in __init__
+    str_to_sympy(code)
+    ~~~~~~~~~~~~^^^^^^
+  File "c:\CODE\brian2\brian2\parsing\sympytools.py", line 77, in str_to_sympy
+    return _str_to_sympy(expr)
+  File "c:\CODE\brian2\brian2\utils\caching.py", line 107, in cached_func
+    func._cache[cache_key] = func(*args, **kwds)
+                             ~~~~^^^^^^^^^^^^^^^
+  File "c:\CODE\brian2\brian2\parsing\sympytools.py", line 83, in _str_to_sympy
+    s_expr = SympyNodeRenderer().render_expr(expr)
+  File "c:\CODE\brian2\brian2\parsing\rendering.py", line 59, in render_expr
+    return self.render_node(node.body)
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "c:\CODE\brian2\brian2\parsing\rendering.py", line 65, in render_node
+    return getattr(self, methname)(node)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "c:\CODE\brian2\brian2\parsing\rendering.py", line 290, in render_BinOp
+    op = self.expression_ops[op_name]
+         ~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+KeyError: 'BitXor'
+'''
+
+The researcher is left completely blank, was not told what went wrong exactly. The same pattern exists in
 `brian2/parsing/statements.py` lines 52-57.
 
 ---
@@ -149,18 +187,59 @@ EquationError: Parsing failed:
 dv/dt = (El - v) / tau
                       ^
 Expected ':'
+
+ File "c:\CODE\brian2\check.py", line 4, in <module>
+    Equations("dv/dt = v^2 / tau : volt")
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\CODE\brian2\brian2\equations\equations.py", line 619, in __init__
+    self._equations = parse_string_equations(eqns)
+                      ~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "c:\CODE\brian2\brian2\utils\caching.py", line 107, in cached_func
+    func._cache[cache_key] = func(*args, **kwds)
+                             ~~~~^^^^^^^^^^^^^^^
+  File "c:\CODE\brian2\brian2\equations\equations.py", line 416, in parse_string_equations
+    expression = Expression(p.sub(" ", expression))
+  File "c:\CODE\brian2\brian2\equations\codestrings.py", line 108, in __init__
+    str_to_sympy(code)
+    ~~~~~~~~~~~~^^^^^^
+  File "c:\CODE\brian2\brian2\parsing\sympytools.py", line 77, in str_to_sympy
+    return _str_to_sympy(expr)
+  File "c:\CODE\brian2\brian2\utils\caching.py", line 107, in cached_func
+    func._cache[cache_key] = func(*args, **kwds)
+                             ~~~~^^^^^^^^^^^^^^^
+  File "c:\CODE\brian2\brian2\parsing\sympytools.py", line 83, in _str_to_sympy
+    s_expr = SympyNodeRenderer().render_expr(expr)
+  File "c:\CODE\brian2\brian2\parsing\rendering.py", line 59, in render_expr
+    return self.render_node(node.body)
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "c:\CODE\brian2\brian2\parsing\rendering.py", line 65, in render_node
+    return getattr(self, methname)(node)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "c:\CODE\brian2\brian2\parsing\rendering.py", line 290, in render_BinOp
+    op = self.expression_ops[op_name]
+         ~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+KeyError: 'BitXor'
 ```
 
 **Improved:**
 ```
-Missing unit declaration in: 'dv/dt = (El - v) / tau'
+✗ Missing unit:
+  Input   : dv/dt = (El - v) / tau
+  Message : Missing unit declaration in:
+  'dv/dt = (El - v) / tau'
 Every equation needs ': unit' at the end.
 Example: dv/dt = (El - v) / tau : volt
+
+✗ Wrong power operator:
+  Input   : dv/dt = v^2 / tau : volt
+  Message : Invalid operator '^' in:
+  'dv/dt = v^2 / tau : volt'
+Brian uses Python syntax. Use '**' for exponentiation.
+Example: v**2 instead of v^2
 ```
 
 Other mistakes handled:
 - Mismatched parentheses — counts opening vs closing brackets
-- Wrong power operator — detects `^` and suggests `**`
 - Missing `=` sign — detects malformed equation structure
 
 ---
