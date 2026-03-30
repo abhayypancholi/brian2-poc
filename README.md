@@ -98,6 +98,7 @@ except ParseException as p_exc:
     ) from p_exc
 ```
 If we run this
+
 Equations("dv//dt = v / tau : volt")
 
 This is what a researcher sees:
@@ -109,8 +110,10 @@ Expected end of text, found 'dv'  (at char 0), (line:1, col:1)
 ```
 
 for Equations("dv/dt = v^2 / tau : volt")
+
 The researcher sees:
-'''
+
+```
 Traceback (most recent call last):
   File "c:\CODE\brian2\check.py", line 4, in <module>
     Equations("dv/dt = v^2 / tau : volt")
@@ -143,7 +146,7 @@ Traceback (most recent call last):
     op = self.expression_ops[op_name]
          ~~~~~~~~~~~~~~~~~~~^^^^^^^^^
 KeyError: 'BitXor'
-'''
+```
 
 The researcher is left completely blank, was not told what went wrong exactly. The same pattern exists in
 `brian2/parsing/statements.py` lines 52-57.
@@ -283,11 +286,11 @@ Other mistakes handled:
 ## About Me
 
 B.Tech student in AI and Data Engineering at MNIT Jaipur,
-entering 2nd year. I studied parsing theory independently and
+entering 2nd year. I studied parsing theory independently from YT and
 will be taking a formal compiler design course in 2nd year.
 
 I built this PoC after reading the Brian2 source directly.
 The key finding — that `parse_statement()` already captures
 comments but every single caller discards them — came from
 tracing the function through `translation.py`, `unitcheck.py`,
-and `GSL_generator.py`, not from documentation.
+and `GSL_generator.py`.
